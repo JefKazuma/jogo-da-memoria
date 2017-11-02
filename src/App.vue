@@ -1,6 +1,8 @@
 <template>
   <div id="app">
-    <img src="./assets/logo.png">
+    <b-navbar toggleable="md" type="dark" variant="info">
+      <b-navbar-brand href="/">Jogo da memória</b-navbar-brand>
+    </b-navbar>
     <router-view/>
   </div>
 </template>
@@ -12,12 +14,7 @@ export default {
 </script>
 
 <style>
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
+  body {
+    background-color: #e3e3e3;
+  }
 </style>
