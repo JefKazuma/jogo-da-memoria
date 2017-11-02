@@ -2,23 +2,19 @@
   <b-container>
     <b-row>
       <b-col>
-        <h1 class="display-4">Olá {{ jogador }}, rodada: {{ rodada }}</h1>
+        <h1>Olá {{ jogador }}, rodada: {{ rodada }}</h1>
       </b-col>
     </b-row>
     <b-row>
-      <b-col cols="3" 
+      <b-col cols="6" lg="2" md="3" sm="4"
              v-for="carta in listaCartas"
-             :key="carta.id"
-             v-if="!carta.disable">
-        <b-card :img-src="carta.img"
-                img-alt="Img"
-                img-top
-                no-body
-                v-on:click="clickCarta(carta)">
-        </b-card>
+             :key="carta.id">
+        <carta-component :carta="carta"
+                         @click.native="clickCarta(carta)">
+        </carta-component>
       </b-col>
     </b-row>
-    <b-modal ref="myModalRef" hide-footer title="Using Component Methods">
+    <b-modal ref="myModalRef" hide-footer title="Parabens">
         <div class="d-block text-center">
             <h3>Hello From My Modal!</h3>
         </div>
@@ -27,73 +23,109 @@
 </template>
 
 <script>
+import CartaComponent from '@/components/Carta.vue'
 
 export default {
   name: 'Jogo',
+  components: {
+    CartaComponent
+  },
   data () {
     return {
       listaCartas: [
-        {id: 1, par: 1, img: './static/cartas/1.jpg', disable: false},
-        {id: 2, par: 2, img: './static/cartas/2.jpg', disable: false},
-        {id: 3, par: 3, img: './static/cartas/3.jpg', disable: false},
-        {id: 4, par: 4, img: './static/cartas/4.jpg', disable: false},
-        {id: 5, par: 5, img: './static/cartas/5.jpg', disable: false},
-        {id: 6, par: 6, img: './static/cartas/6.jpg', disable: false},
-        {id: 7, par: 7, img: './static/cartas/7.jpg', disable: false},
-        {id: 8, par: 8, img: './static/cartas/8.jpg', disable: false},
-        {id: 9, par: 9, img: './static/cartas/9.jpg', disable: false},
-        {id: 10, par: 10, img: './static/cartas/10.jpg', disable: false},
-        {id: 11, par: 1, img: './static/cartas/1.jpg', disable: false},
-        {id: 12, par: 2, img: './static/cartas/2.jpg', disable: false},
-        {id: 13, par: 3, img: './static/cartas/3.jpg', disable: false},
-        {id: 14, par: 4, img: './static/cartas/4.jpg', disable: false},
-        {id: 15, par: 5, img: './static/cartas/5.jpg', disable: false},
-        {id: 16, par: 6, img: './static/cartas/6.jpg', disable: false},
-        {id: 17, par: 7, img: './static/cartas/7.jpg', disable: false},
-        {id: 18, par: 8, img: './static/cartas/8.jpg', disable: false},
-        {id: 19, par: 9, img: './static/cartas/9.jpg', disable: false},
-        {id: 20, par: 10, img: './static/cartas/10.jpg', disable: false}
+        {id: 1, par: 1, disable: false, active: false, erro: false},
+        {id: 2, par: 2, disable: false, active: false, erro: false},
+        {id: 3, par: 3, disable: false, active: false, erro: false},
+        {id: 4, par: 4, disable: false, active: false, erro: false},
+        {id: 5, par: 5, disable: false, active: false, erro: false},
+        {id: 6, par: 6, disable: false, active: false, erro: false},
+        {id: 7, par: 7, disable: false, active: false, erro: false},
+        {id: 8, par: 8, disable: false, active: false, erro: false},
+        {id: 9, par: 9, disable: false, active: false, erro: false},
+        {id: 10, par: 10, disable: false, active: false, erro: false},
+        {id: 11, par: 1, disable: false, active: false, erro: false},
+        {id: 12, par: 2, disable: false, active: false, erro: false},
+        {id: 13, par: 3, disable: false, active: false, erro: false},
+        {id: 14, par: 4, disable: false, active: false, erro: false},
+        {id: 15, par: 5, disable: false, active: false, erro: false},
+        {id: 16, par: 6, disable: false, active: false, erro: false},
+        {id: 17, par: 7, disable: false, active: false, erro: false},
+        {id: 18, par: 8, disable: false, active: false, erro: false},
+        {id: 19, par: 9, disable: false, active: false, erro: false},
+        {id: 20, par: 10, disable: false, active: false, erro: false}
       ],
       rodada: 0,
       jogador: '',
-      cartaSelecionada: null
+      cartaSelecionada: null,
+      desabilitarClick: false
     }
   },
   watch: {
-    listaCartas: function (e) {
-      console.log(e)
+    listaCartas: {
+      handler: function () {
+        if (this.verificaLista()) {
+          this.$refs.myModalRef.show()
+        }
+      },
+      deep: true
     }
   },
   created: function () {
     this.jogador = JSON.parse(localStorage.getItem('Jogador')).nome
     this.shuffle(this.listaCartas)
-    console.log(this.listaCartas)
   },
   methods: {
     clickCarta: function (carta) {
-      if (!carta.disable) {
+      if (!carta.disable && !this.desabilitarClick) {
         if (this.cartaSelecionada === null) {
           this.cartaSelecionada = carta
+          this.selecionarCarta(carta, true)
         } else if (this.cartaSelecionada.par === carta.par) {
           if (this.cartaSelecionada.id !== carta.id) {
+            this.selecionarCarta(carta, true)
             this.desabilitarCartas()
             console.log('vc acertou')
             this.cartaSelecionada = null
             this.rodada++
-            console.log(this.verificaLista())
-            if (this.verificaLista()) {
-              // abrir modal
-              this.$refs.myModalRef.show()
-            }
           } else {
+            this.selecionarCarta(carta, false)
+            this.cartaSelecionada = null
             console.log('não vale selecionar a msms carta')
           }
         } else {
-          this.cartaSelecionada = null
+          this.selecionarCarta(carta, true)
+          this.cartaErrada(carta, true)
+          this.cartaErrada(this.cartaSelecionada, true)
+          this.desabilitarClick = true
+          setTimeout(() => {
+            this.selecionarCarta(carta, false)
+            this.selecionarCarta(this.cartaSelecionada, false)
+
+            this.cartaErrada(carta, false)
+            this.cartaErrada(this.cartaSelecionada, false)
+            this.cartaSelecionada = null
+            this.desabilitarClick = false
+          }, 1000)
           console.log('vc errou')
           this.rodada++
         }
       }
+    },
+    cartaErrada: function (carta, erro) {
+      this.listaCartas
+        .filter(x => x.id === carta.id)
+        .map(x => {
+          x.erro = erro
+          return x
+        })
+    },
+    selecionarCarta: function (carta, ativo) {
+      this.listaCartas
+        .filter(x => x.id === carta.id)
+        .map(x => {
+          x.active = ativo
+          return x
+        })
     },
     desabilitarCartas: function () {
       this.listaCartas
@@ -125,9 +157,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.card {
-  margin-bottom: 20px;
-}
-</style>
