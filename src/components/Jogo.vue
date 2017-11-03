@@ -1,25 +1,41 @@
 <template>
-  <b-container>
-    <b-row>
-      <b-col>
-        <h1>Olá {{ jogador }}, rodada: {{ rodada }}</h1>
-      </b-col>
-    </b-row>
-    <b-row>
-      <b-col cols="6" lg="2" md="3" sm="4"
-             v-for="carta in listaCartas"
-             :key="carta.id">
-        <carta-component :carta="carta"
-                         @click.native="clickCarta(carta)">
-        </carta-component>
-      </b-col>
-    </b-row>
-    <b-modal ref="myModalRef" hide-footer title="Parabens">
-        <div class="d-block text-center">
-            <h3>Hello From My Modal!</h3>
+  <div class="jogo">
+    <b-jumbotron :header="`Olá ${jogador}`" 
+                 lead="Bem-vindo ao jogo da memória"
+                 :fluid="true">
+      <p>Você está na rodada: {{ rodada }}</p>
+    </b-jumbotron>
+    <b-container>
+      <b-row>
+        <b-col cols="4" lg="2" md="3" sm="4"
+              v-for="carta in listaCartas"
+              :key="carta.id">
+          <carta-component :carta="carta"
+                          @click.native="clickCarta(carta)">
+          </carta-component>
+        </b-col>
+      </b-row>
+      <b-modal ref="jogoFinalizado"
+               header-bg-variant="success"
+               header-text-variant="light"
+               :ok-only="true"
+               :no-close-on-backdrop="true"
+               :no-close-on-esc="true"
+               :hide-header-close="true"
+               ok-variant="success"
+               title="Parabéns, você completou o jogo">
+        <p>Você finalizou o jogo em <strong>{{ rodada }}</strong> rodadas.</p>
+        <div slot="modal-footer" class="w-100 text-right">
+          <b-btn variant="primary" @click="tentarNovamente()">
+            Tentar novamente
+          </b-btn>
+          <b-btn variant="success" @click="fecharModal()">
+            Voltar para Home
+          </b-btn>
         </div>
-    </b-modal>
-  </b-container>
+      </b-modal>
+    </b-container>
+  </div>
 </template>
 
 <script>
@@ -57,86 +73,91 @@ export default {
       rodada: 0,
       jogador: '',
       cartaSelecionada: null,
-      desabilitarClick: false
+      desabilitarClick: false,
+      pontuacaoAnterior: 0
     }
   },
   watch: {
     listaCartas: {
       handler: function () {
         if (this.verificaLista()) {
-          this.$refs.myModalRef.show()
+          this.$refs.jogoFinalizado.show()
         }
+      },
+      deep: true
+    },
+    rodada: {
+      handler: function (e) {
+        localStorage.setItem('Jogador', JSON.stringify({
+          nome: this.jogador,
+          rodada: e
+        }))
       },
       deep: true
     }
   },
   created: function () {
-    this.jogador = JSON.parse(localStorage.getItem('Jogador')).nome
-    this.shuffle(this.listaCartas)
+    let item = JSON.parse(localStorage.getItem('Jogador'))
+    if (item) {
+      this.jogador = item.nome
+      this.shuffle(this.listaCartas)
+    } else {
+      this.$router.replace({name: 'HomeErro', params: {erro: 'Ocorreu um erro ao carregar o jogo, por favor, insira seu nome e tente novamente'}})
+    }
   },
   methods: {
     clickCarta: function (carta) {
       if (!carta.disable && !this.desabilitarClick) {
         if (this.cartaSelecionada === null) {
           this.cartaSelecionada = carta
-          this.selecionarCarta(carta, true)
+          carta.active = true
         } else if (this.cartaSelecionada.par === carta.par) {
           if (this.cartaSelecionada.id !== carta.id) {
-            this.selecionarCarta(carta, true)
-            this.desabilitarCartas()
-            console.log('vc acertou')
+            carta.active = true
+            this.cartaSelecionada.disable = true
+            carta.disable = true
             this.cartaSelecionada = null
             this.rodada++
-          } else {
-            this.selecionarCarta(carta, false)
-            this.cartaSelecionada = null
-            console.log('não vale selecionar a msms carta')
           }
         } else {
-          this.selecionarCarta(carta, true)
-          this.cartaErrada(carta, true)
-          this.cartaErrada(this.cartaSelecionada, true)
+          carta.active = true
+          carta.erro = true
+          this.cartaSelecionada.erro = true
           this.desabilitarClick = true
           setTimeout(() => {
-            this.selecionarCarta(carta, false)
-            this.selecionarCarta(this.cartaSelecionada, false)
-
-            this.cartaErrada(carta, false)
-            this.cartaErrada(this.cartaSelecionada, false)
+            carta.active = false
+            this.cartaSelecionada.active = false
+            carta.erro = false
+            this.cartaSelecionada.erro = false
             this.cartaSelecionada = null
             this.desabilitarClick = false
           }, 1000)
-          console.log('vc errou')
           this.rodada++
         }
       }
     },
-    cartaErrada: function (carta, erro) {
-      this.listaCartas
-        .filter(x => x.id === carta.id)
-        .map(x => {
-          x.erro = erro
-          return x
-        })
-    },
-    selecionarCarta: function (carta, ativo) {
-      this.listaCartas
-        .filter(x => x.id === carta.id)
-        .map(x => {
-          x.active = ativo
-          return x
-        })
-    },
-    desabilitarCartas: function () {
-      this.listaCartas
-        .filter(x => x.par === this.cartaSelecionada.par)
-        .map(x => {
-          x.disable = true
-          return x
-        })
-    },
     verificaLista: function () {
       return this.listaCartas.filter(x => !x.disable).length === 0
+    },
+    fecharModal: function () {
+      let lista = JSON.parse(localStorage.getItem('Ranking')) || []
+      lista.push({jogador: this.jogador, rodada: this.pontuacaoAnterior !== 0 && this.pontuacaoAnterior < this.rodada ? this.pontuacaoAnterior : this.rodada})
+      localStorage.setItem('Ranking', JSON.stringify(lista))
+      localStorage.removeItem('Jogador')
+      this.$refs.jogoFinalizado.hide()
+      this.$router.replace({name: 'Home'})
+    },
+    tentarNovamente: function () {
+      this.pontuacaoAnterior = this.rodada
+      this.rodada = 0
+      this.listaCartas.map(x => {
+        x.active = false
+        x.erro = false
+        x.disable = false
+        return x
+      })
+      this.shuffle(this.listaCartas)
+      this.$refs.jogoFinalizado.hide()
     },
     shuffle: function (array) {
       let currentIndex = array.length

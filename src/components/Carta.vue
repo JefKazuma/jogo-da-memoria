@@ -3,10 +3,10 @@
        :class="{flip: carta.active, shake: carta.erro, disable: carta.disable}">
     <div class="flipper">
       <div class="front">
-        <img :src="'./static/cartas/background.jpg'" />
+        <img :src="'/static/cartas/background.jpg'" />
       </div>
       <div class="back">
-        <img :src="`./static/cartas/${carta.par}.jpg`" />
+        <img :src="`/static/cartas/${carta.par}.jpg`" />
       </div>
     </div>
   </div>
@@ -15,28 +15,19 @@
 <script>
 export default {
   name: 'CartaComponent',
-  props: ['carta'],
-  watch: {
-    carta: {
-      handler: function (e) {
-        console.log(e)
-      },
-      deep: true
-    }
-  }
+  props: ['carta']
 }
 </script>
 
 <style lang="scss" scoped>
 .carta {
   position: relative;
-  display: -ms-flexbox;
+  width: 100%;
+  height: calc(100vw);
+  max-height: 15em;
   display: flex;
   margin: 1rem auto;
-  -ms-flex-direction: column;
   flex-direction: column;
-  min-width: 0;
-  word-wrap: break-word;
   cursor: pointer;
 
   img {
@@ -62,6 +53,8 @@ export default {
 
     .flipper {
       position: relative;
+      width: 100%;
+      height: 100%;
       transition: 0.6s;
       transform-style: preserve-3d;
     }
@@ -69,23 +62,32 @@ export default {
     .front, 
     .back {
       position: absolute;
+      width: 100%;
       backface-visibility: hidden;
-      top: 0;
-      left: 0;
-      background-color: #fff;
+      background-color: #e9ecef;
       padding: 1rem;
       border-radius: .5rem;
     }
 
     .front {
+      left: 50%;
+      top: 50%;
       z-index: 2;
-      transform: rotateY(0deg);
+      transform: rotateY(0deg) translate(-50%,-50%);
     }
 
     .back {
+      left: 0;
+      top: 50%;
       overflow: hidden;
-      transform: rotateY(180deg);
+      transform: rotateY(180deg) translate(0,-50%);
     }
+  }
+}
+
+@media (max-width: 430px) {
+  .carta {
+    max-height: 9em;
   }
 }
 

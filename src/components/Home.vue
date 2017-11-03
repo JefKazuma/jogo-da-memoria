@@ -2,6 +2,11 @@
   <b-container>
     <b-row class="height-80 justify-content-md-center" align-v="center">
       <b-col cols="8">
+        <b-alert variant="danger"
+                dismissible
+                :show="erro && erro.length > 0">
+          {{ erro }}
+        </b-alert>
         <b-card header="Bem vindo ao jogo da memória">
           <b-form @submit.prevent="onSubmit">
             <b-form-group id="lblNome"
@@ -24,6 +29,7 @@
 <script>
 export default {
   name: 'Home',
+  props: ['erro'],
   data () {
     return {
       form: {

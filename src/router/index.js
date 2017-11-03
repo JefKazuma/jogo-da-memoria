@@ -10,7 +10,13 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'Hello',
+      name: 'Home',
+      component: Home
+    },
+    {
+      path: '/home/:erro',
+      name: 'HomeErro',
+      props: true,
       component: Home
     },
     {
