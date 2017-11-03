@@ -37,10 +37,24 @@ export default {
       }
     }
   },
+  created: function () {
+    localStorage.removeItem('Jogador')
+  },
   methods: {
     onSubmit: function () {
-      localStorage.setItem('Jogador', JSON.stringify(this.form))
-      this.$router.replace({name: 'Jogo'})
+      if (!this.verificaJogador()) {
+        localStorage.setItem('Jogador', JSON.stringify(this.form))
+        this.$router.replace({name: 'Jogo'})
+      } else {
+        this.$router.replace({name: 'HomeErro', params: {erro: 'Este nome já existe no ranking, por favor, insira outro nome'}})
+      }
+    },
+    verificaJogador: function () {
+      let lista = JSON.parse(localStorage.getItem('Ranking')) || []
+      if (lista.length > 0) {
+        return lista.filter(x => x.jogador === this.form.nome).length > 0
+      }
+      return false
     }
   }
 }

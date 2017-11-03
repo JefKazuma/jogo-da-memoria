@@ -25,11 +25,11 @@
                ok-variant="success"
                title="Parabéns, você completou o jogo">
         <p>Você finalizou o jogo em <strong>{{ rodada }}</strong> rodadas.</p>
-        <div slot="modal-footer" class="w-100 text-right">
-          <b-btn variant="primary" @click="tentarNovamente()">
+        <div slot="modal-footer" class="w-100">
+          <b-btn variant="primary" class="float-left" @click="tentarNovamente()">
             Tentar novamente
           </b-btn>
-          <b-btn variant="success" @click="fecharModal()">
+          <b-btn variant="success" class="float-right" @click="fecharModal()">
             Voltar para Home
           </b-btn>
         </div>
@@ -48,28 +48,7 @@ export default {
   },
   data () {
     return {
-      listaCartas: [
-        {id: 1, par: 1, disable: false, active: false, erro: false},
-        {id: 2, par: 2, disable: false, active: false, erro: false},
-        {id: 3, par: 3, disable: false, active: false, erro: false},
-        {id: 4, par: 4, disable: false, active: false, erro: false},
-        {id: 5, par: 5, disable: false, active: false, erro: false},
-        {id: 6, par: 6, disable: false, active: false, erro: false},
-        {id: 7, par: 7, disable: false, active: false, erro: false},
-        {id: 8, par: 8, disable: false, active: false, erro: false},
-        {id: 9, par: 9, disable: false, active: false, erro: false},
-        {id: 10, par: 10, disable: false, active: false, erro: false},
-        {id: 11, par: 1, disable: false, active: false, erro: false},
-        {id: 12, par: 2, disable: false, active: false, erro: false},
-        {id: 13, par: 3, disable: false, active: false, erro: false},
-        {id: 14, par: 4, disable: false, active: false, erro: false},
-        {id: 15, par: 5, disable: false, active: false, erro: false},
-        {id: 16, par: 6, disable: false, active: false, erro: false},
-        {id: 17, par: 7, disable: false, active: false, erro: false},
-        {id: 18, par: 8, disable: false, active: false, erro: false},
-        {id: 19, par: 9, disable: false, active: false, erro: false},
-        {id: 20, par: 10, disable: false, active: false, erro: false}
-      ],
+      listaCartas: [],
       rodada: 0,
       jogador: '',
       cartaSelecionada: null,
@@ -85,27 +64,37 @@ export default {
         }
       },
       deep: true
-    },
-    rodada: {
-      handler: function (e) {
-        localStorage.setItem('Jogador', JSON.stringify({
-          nome: this.jogador,
-          rodada: e
-        }))
-      },
-      deep: true
     }
   },
   created: function () {
     let item = JSON.parse(localStorage.getItem('Jogador'))
-    if (item) {
+    if (item && item.nome) {
       this.jogador = item.nome
-      this.shuffle(this.listaCartas)
+      this.listaCartas = this.shuffle(this.criaLista())
     } else {
       this.$router.replace({name: 'HomeErro', params: {erro: 'Ocorreu um erro ao carregar o jogo, por favor, insira seu nome e tente novamente'}})
     }
   },
   methods: {
+    criaLista: function () {
+      let j = 10
+      let lista = []
+      for (let i = 1; i <= 20; i++) {
+        let item = {
+          id: i,
+          par: i,
+          disable: false,
+          erro: false,
+          active: false
+        }
+        if (i > 10) {
+          item.par = j
+          j--
+        }
+        lista.push(item)
+      }
+      return lista
+    },
     clickCarta: function (carta) {
       if (!carta.disable && !this.desabilitarClick) {
         if (this.cartaSelecionada === null) {
@@ -140,24 +129,31 @@ export default {
       return this.listaCartas.filter(x => !x.disable).length === 0
     },
     fecharModal: function () {
-      let lista = JSON.parse(localStorage.getItem('Ranking')) || []
-      lista.push({jogador: this.jogador, rodada: this.pontuacaoAnterior !== 0 && this.pontuacaoAnterior < this.rodada ? this.pontuacaoAnterior : this.rodada})
-      localStorage.setItem('Ranking', JSON.stringify(lista))
-      localStorage.removeItem('Jogador')
+      this.salvarJogadorRanking()
       this.$refs.jogoFinalizado.hide()
       this.$router.replace({name: 'Home'})
     },
     tentarNovamente: function () {
+      this.salvarJogadorRanking()
       this.pontuacaoAnterior = this.rodada
       this.rodada = 0
-      this.listaCartas.map(x => {
-        x.active = false
-        x.erro = false
-        x.disable = false
-        return x
-      })
-      this.shuffle(this.listaCartas)
+      this.listaCartas = this.shuffle(this.criaLista())
       this.$refs.jogoFinalizado.hide()
+    },
+    salvarJogadorRanking: function () {
+      let lista = JSON.parse(localStorage.getItem('Ranking')) || []
+      let rodada = this.pontuacaoAnterior !== 0 && this.pontuacaoAnterior < this.rodada ? this.pontuacaoAnterior : this.rodada
+      if (lista.length > 0) {
+        let item = lista.filter(x => x.jogador === this.jogador)
+        if (item.length > 0) {
+          item.map(x => {
+            x.rodada = rodada
+          })
+        } else {
+          lista.push({jogador: this.jogador, rodada})
+        }
+      }
+      localStorage.setItem('Ranking', JSON.stringify(lista))
     },
     shuffle: function (array) {
       let currentIndex = array.length
