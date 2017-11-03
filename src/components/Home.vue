@@ -1,7 +1,7 @@
 <template>
   <b-container>
     <b-row class="height-80 justify-content-md-center" align-v="center">
-      <b-col cols="8">
+      <b-col cols="12" lg="8">
         <b-alert variant="danger"
                 dismissible
                 :show="erro && erro.length > 0">
